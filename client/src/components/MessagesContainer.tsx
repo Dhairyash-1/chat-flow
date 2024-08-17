@@ -13,11 +13,15 @@ const MessagesContainer = () => {
         isOwnMessage={true}
       />
       <Message
-        text="this is my folio i'm working as product desinger at adbobe and i do product realted decision to how to develop and desingn and ship better product that can help"
+        text="Take this part of letter seriously because it's likely one of your first genuine oppurtunities to make a personal,positive impression on a employer.You want your words to invite them to keep reading and convey why you're the best choice"
         isOwnMessage={false}
       />
       <Message text="You've good folio" isOwnMessage={true} />
-      <Message text="however we're looking for" isOwnMessage={true} />
+      <Message text="Thanks" isOwnMessage={false} />
+      <Message
+        text="however we're looking for someone more experience"
+        isOwnMessage={true}
+      />
     </div>
   )
 }

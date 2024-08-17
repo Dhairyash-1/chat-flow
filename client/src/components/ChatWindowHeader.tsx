@@ -10,7 +10,7 @@ const ChatWindowHeader = () => {
         alt="user"
       />
       <div className="flex flex-col gap-1 relative">
-        <h3 className="font-bold text-lg">Kristine</h3>
+        <h3 className="font-bold text-lg">John</h3>
         <div className="absolute bg-green-500 w-[8px] h-[8px] rounded-full top-3 -right-4"></div>
         <p className="font-normal text-base text-[#c0c0c0]">Typing...</p>
       </div>

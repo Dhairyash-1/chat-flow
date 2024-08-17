@@ -3,7 +3,7 @@ import ConversationItem from "./ConversationItem"
 
 const ConversationList = () => {
   return (
-    <div className="flex flex-col mt-2 ">
+    <div className="flex flex-col mt-2 pl-[1px]">
       <ConversationItem />
       <ConversationItem />
       <ConversationItem />
