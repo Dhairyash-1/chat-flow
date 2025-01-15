@@ -17,13 +17,15 @@ interface ChatContextProps {
   activeChatId: string | null
   isTyping: boolean
   onlineUsers: string[] | null
-  showChatList: boolean
+  userId: string | null
+  setUserId: (id: string) => void
+  // showChatList: boolean
   setMessages: React.Dispatch<React.SetStateAction<MessageT[]>>
   setActiveChat: (chat: ChatT) => void
   setActiveChatId: (chatId: string) => void
   setIsTyping: (status: boolean) => void
   setOnlineUsers: React.Dispatch<React.SetStateAction<string[] | null>>
-  setShowChatList: (status: boolean) => void
+  // setShowChatList: (status: boolean) => void
 }
 
 export const ChatContext = createContext<ChatContextProps | undefined>(
@@ -36,35 +38,24 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
   const [isTyping, setIsTyping] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState<string[] | null>(null)
-  const [showChatList, setShowChatList] = useState(() =>
-    window.innerWidth >= 768 ? false : true
-  )
+  const [userId, setUserId] = useState<string | null>(null)
   const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket) return
     const handleNewMessage = (message: MessageT) => {
+      console.log("new message from backend")
       setMessages((prev) => [...prev, message])
     }
 
-    socket.on(NEW_MESSAGE, handleNewMessage)
+    socket.on(NEW_MESSAGE, (msg) => {
+      handleNewMessage(JSON.parse(msg))
+    })
 
     return () => {
       socket.off(NEW_MESSAGE, handleNewMessage)
     }
   }, [socket])
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setShowChatList(true) // Always show chat list on medium and larger screens
-      } else {
-        setShowChatList(false) // Default behavior for smaller screens
-      }
-    }
-
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
 
   return (
     <ChatContext.Provider
@@ -79,8 +70,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         setIsTyping,
         onlineUsers,
         setOnlineUsers,
-        showChatList,
-        setShowChatList,
+        userId,
+        setUserId,
       }}
     >
       {children}

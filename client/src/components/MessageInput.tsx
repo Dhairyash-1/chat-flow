@@ -9,8 +9,7 @@ import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
 
 const MessageInput = () => {
-  const { userId } = useAuth()
-  const { setIsTyping, activeChatId, setMessages } = useChat()
+  const { setIsTyping, userId, activeChatId } = useChat()
   const { socket, joinChat, leaveChat } = useSocket()
   const [newMessage, setNewMessage] = useState<string>("")
   const previousChatId = useRef<string | null>(null)

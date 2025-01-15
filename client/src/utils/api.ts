@@ -9,6 +9,10 @@ export const fetchAllUserChats = async (): Promise<ChatT[]> => {
   const res = await axiosInstance.get("/chat/chats")
   return res.data.chats
 }
+export const fetchChatById = async (chatId: string): Promise<any[]> => {
+  const res = await axiosInstance.get(`/chat/${chatId}/message`)
+  return res.data
+}
 
 export const createNewChat = async (participantId: string) => {
   const res = await axiosInstance.post(`/chat/new/${participantId}`)

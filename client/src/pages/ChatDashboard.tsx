@@ -16,14 +16,27 @@ import { useChat } from "../hooks/useChat"
 
 import useSocket from "../hooks/useSocket"
 import ChatListSidebar from "../components/ChatListSidebar"
+import { useQuery } from "@tanstack/react-query"
+import { fetchChatById } from "../utils/api"
 
 const ChatDashboard = () => {
   const { userId } = useAuth()
   const { socket } = useSocket()
-  const { setOnlineUsers, showChatList } = useChat()
 
-  const { activeChat, activeChatId, setMessages } = useChat()
+  const { activeChat, activeChatId, setMessages, setOnlineUsers } = useChat()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  const { data } = useQuery({
+    queryKey: ["message", activeChatId], // Include `activeChatId` in the queryKey
+    queryFn: () => fetchChatById(activeChatId as string), // Use the `activeChatId` directly in the queryFn
+    enabled: !!activeChatId, // Only fetch when `activeChatId` is available
+  })
+
+  useEffect(() => {
+    if (data) {
+      setMessages(data.messages)
+    }
+  }, [data, setMessages])
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,13 +54,11 @@ const ChatDashboard = () => {
       // console.log("user online", users)
       setOnlineUsers(users)
     })
-  }, [socket, setOnlineUsers, userId])
+  }, [socket, setOnlineUsers])
 
-  useEffect(() => {
-    setMessages([])
-  }, [activeChatId, setMessages])
-
-  console.log(showChatList)
+  // useEffect(() => {
+  //   setMessages([])
+  // }, [activeChatId, setMessages])
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen bg-white">

@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react"
-import profile from "../assets/profile.webp"
-
 import { useChat } from "../hooks/useChat"
-import { ConversationT } from "../utils/types"
-
-import { useAuth } from "@clerk/clerk-react"
 import useSocket from "../hooks/useSocket"
-import { Button } from "./ui/button"
 import { ChevronLeft } from "lucide-react"
 
 const ChatWindowHeader = () => {
   const { socket } = useSocket()
-  // const { userId: currentUserId } = useAuth()
+
   const { onlineUsers, activeChatId, setActiveChat, setActiveChatId } =
     useChat()
   const [isTyping, setIsTyping] = useState(false)
@@ -19,7 +13,7 @@ const ChatWindowHeader = () => {
   // const isOnline = (participantId: string) =>
   //   onlineUsers.includes(participantId)
 
-  const conversation = activeChat as ConversationT
+  const conversation = activeChat as ChatT
   const { profilePic, name, clerkId } = conversation.participants[0]
 
   useEffect(() => {

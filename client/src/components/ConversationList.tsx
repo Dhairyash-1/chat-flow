@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import ConversationItem from "./ConversationItem"
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
@@ -14,7 +14,7 @@ import {
 
 const ConversationList = () => {
   const { userId } = useAuth()
-  const { setActiveChat, setActiveChatId, onlineUsers } = useChat()
+  const { setActiveChat, setUserId, setActiveChatId, onlineUsers } = useChat()
   const [isCreatingChat, setIsCreatingChat] = useState(false)
   const queryClient = useQueryClient()
 
@@ -50,6 +50,13 @@ const ConversationList = () => {
       setIsCreatingChat(false)
     },
   })
+
+  useEffect(() => {
+    if (availableUsers) {
+      const user = availableUsers.find((user) => user.clerkId === userId)
+      setUserId(user?.id)
+    }
+  }, [availableUsers, userId, setUserId])
 
   // Handle the start of the conversation
   const handleStartConversation = (participantId: string) => {
