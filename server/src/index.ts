@@ -7,6 +7,8 @@ import bodyParser from "body-parser"
 import { syncUserWithDb } from "./controllers/user.controller"
 import { NEW_MESSAGE } from "./utils/constant"
 import { clerkMiddleware } from "@clerk/express"
+import Redis from "ioredis"
+import { produceMessage, startMessageConsumer } from "./services/kafka"
 
 import { db } from "./config/drizzle"
 import { messages } from "./models/schema"
@@ -42,9 +44,23 @@ app.use(cors(corsOptions))
 const io = new Server(server, {
   cors: corsOptions,
 })
+startMessageConsumer()
+const pub = new Redis({
+  host: process.env.REDIS_HOST as string,
+  port: Number(process.env.REDIS_PORT),
+  username: process.env.REDIS_USERNAME as string,
+  password: process.env.REDIS_PASSWORD as string,
+})
+const sub = new Redis({
+  host: process.env.REDIS_HOST as string,
+  port: Number(process.env.REDIS_PORT),
+  username: process.env.REDIS_USERNAME as string,
+  password: process.env.REDIS_PASSWORD as string,
+})
 
 // Keep the online users in a global map
 const onlineUsers = new Map()
+sub.subscribe("MESSAGES")
 
 io.on("connection", (socket) => {
   // Handle a user coming online
@@ -70,12 +86,22 @@ io.on("connection", (socket) => {
   socket.on(NEW_MESSAGE, async ({ content, chatId, senderId, timestamp }) => {
     console.log("New message received:", content, "to", chatId)
 
-    io.to(chatId).emit(NEW_MESSAGE, {
-      chatId: chatId,
-      senderId: senderId,
-      content: content,
-      timestamp,
-    })
+    // io.to(chatId).emit(NEW_MESSAGE, {
+    //   chatId: chatId,
+    //   senderId: senderId,
+    //   content: content,
+    //   timestamp,
+    // })
+
+    await pub.publish(
+      "MESSAGES",
+      JSON.stringify({
+        chatId: chatId,
+        senderId: senderId,
+        content: content,
+        timestamp,
+      })
+    )
   })
 
   socket.on("typing", ({ chatId, userId, isTyping }) => {
@@ -100,6 +126,16 @@ io.on("connection", (socket) => {
     // Broadcast updated online users
     io.emit("online", Array.from(onlineUsers.keys()))
   })
+})
+
+sub.on("message", async (channel, message) => {
+  console.log("new msg from redis", channel)
+  if (channel === "MESSAGES") {
+    const parsedMsg = JSON.parse(message)
+    io.to(parsedMsg.chatId).emit(NEW_MESSAGE, message)
+
+    await produceMessage(parsedMsg)
+  }
 })
 
 import userRouter from "./routes/user.routes"
