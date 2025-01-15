@@ -1,19 +1,7 @@
-import ConversationList from "./ConversationList"
-import Filter from "./Filter"
-import Header from "./Header"
+import { ReactElement } from "react"
 
-const ConversationPanel = () => {
-  return (
-    <>
-      <div className="w-[30%] flex flex-col h-screen ">
-        <Header />
-        <Filter />
-        <div className="flex-1 overflow-y-scroll no-scrollbar bg-white">
-          <ConversationList />
-        </div>
-      </div>
-    </>
-  )
+const ConversationPanel = ({ children }: { children: ReactElement }) => {
+  return children
 }
 
 export default ConversationPanel

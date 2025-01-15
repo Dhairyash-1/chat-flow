@@ -3,6 +3,9 @@ import { eq } from "drizzle-orm"
 import { Request, Response } from "express"
 import { users } from "../models/schema"
 import { Webhook } from "svix"
+import { ne } from "drizzle-orm"
+import { WebhookEvent } from "@clerk/express"
+import { CustomRequest } from "utils/constant"
 
 export const syncUserWithDb = async (req: Request, res: Response) => {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET
@@ -29,14 +32,14 @@ export const syncUserWithDb = async (req: Request, res: Response) => {
   // Create a new Svix instance with your secret.
   const wh = new Webhook(WEBHOOK_SECRET)
 
-  let evt: any
+  let evt: WebhookEvent
   try {
     evt = wh.verify(payload, {
       "svix-id": svix_id as string,
       "svix-timestamp": svix_timestamp as string,
       "svix-signature": svix_signature as string,
-    })
-  } catch (err) {
+    }) as WebhookEvent
+  } catch (err: any) {
     console.log("Error verifying webhook:", err.message)
     return res.status(400).json({
       success: false,
@@ -50,44 +53,29 @@ export const syncUserWithDb = async (req: Request, res: Response) => {
   // console.log("Webhook body:", evt.data)
 
   if (eventType === "user.created") {
-    const {
-      id,
-      username,
-      first_name,
-      last_name,
-      email_addresses,
-      profile_image_url,
-    } = evt.data
+    const { id, username, first_name, last_name, email_addresses, image_url } =
+      evt.data
     const [newUser] = await db
       .insert(users)
       .values({
-        // @ts-ignore
         clerkId: id,
         email: email_addresses[0].email_address,
         name: `${first_name} ${last_name || ""}`,
-        username,
-        online: false,
-        profilePic: profile_image_url,
+        username: username || "",
+        profilePic: image_url,
       })
       .returning()
 
     res.status(201).json({ data: newUser })
   }
   if (eventType === "user.updated") {
-    const {
-      id,
-      email_addresses,
-      first_name,
-      last_name,
-      username,
-      profile_image_url,
-    } = evt.data
+    const { id, email_addresses, first_name, last_name, username, image_url } =
+      evt.data
     const updatedData = {
       email: email_addresses[0].email_address,
       name: `${first_name} ${last_name || ""}`,
-      username: username,
-      online: false,
-      profilePic: profile_image_url,
+      username: username || "",
+      profilePic: image_url,
     }
     const [updatedUser] = await db
       .update(users)
@@ -98,7 +86,22 @@ export const syncUserWithDb = async (req: Request, res: Response) => {
   }
   if (eventType === "user.deleted") {
     const { id } = evt.data
-    await db.delete(users).where(eq(users.clerkId, id))
+    await db.delete(users).where(eq(users.clerkId, id as string))
     res.status(200).json({ message: "user deleted successfully" })
+  }
+}
+
+export const getOnlineUsers = async (req: Request, res: Response) => {
+  try {
+    const onlineUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.isOnline, false))
+    // console.log(onlineUsers)
+    res
+      .status(200)
+      .json({ users: onlineUsers, message: "Online users fetched" })
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch online users", error })
   }
 }

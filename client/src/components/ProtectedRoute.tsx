@@ -1,24 +1,29 @@
 import { useAuth } from "@clerk/clerk-react"
-import { ReactElement, useEffect, useState } from "react"
+import { ReactElement, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Circles } from "react-loader-spinner"
+import { SocketProvider } from "../context/SocketContext"
+import { ChatProvider } from "../context/ChatContext"
 
 const ProtectedRoute = ({ children }: { children: ReactElement }) => {
-  const { isSignedIn } = useAuth()
+  const { userId, isLoaded } = useAuth()
+
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isSignedIn === undefined) return
-    if (!isSignedIn) {
+    if (!userId && isLoaded) {
       navigate("/sign-in")
-    } else {
-      setLoading(false)
     }
-  }, [isSignedIn, navigate])
+  }, [userId, navigate, isLoaded])
 
-  if (loading) return <Circles color="#EF6448" />
-  return children
+  if (!isLoaded) return <Circles color="#EF6448" />
+
+  if (userId)
+    return (
+      <SocketProvider userId={userId}>
+        <ChatProvider>{children}</ChatProvider>
+      </SocketProvider>
+    )
 }
 
 export default ProtectedRoute
