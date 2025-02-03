@@ -1,3 +1,4 @@
+import { MessageT } from "../context/ChatContext"
 import { axiosInstance } from "./useAxiosInstance"
 
 export const fetchAvailableUsers = async (): Promise<UserT[]> => {
@@ -9,7 +10,9 @@ export const fetchAllUserChats = async (): Promise<ChatT[]> => {
   const res = await axiosInstance.get("/chat/chats")
   return res.data.chats
 }
-export const fetchChatById = async (chatId: string): Promise<any[]> => {
+export const fetchChatById = async (
+  chatId: string
+): Promise<{ messages: MessageT[] }> => {
   const res = await axiosInstance.get(`/chat/${chatId}/message`)
   return res.data
 }

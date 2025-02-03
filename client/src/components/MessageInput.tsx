@@ -1,6 +1,6 @@
 import sendIcon from "../assets/paper-plane.svg"
 import attachment from "../assets/attachment.svg"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, act } from "react"
 import { NEW_MESSAGE } from "../utils/event"
 import useSocket from "../hooks/useSocket"
 
@@ -9,7 +9,7 @@ import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
 
 const MessageInput = () => {
-  const { setIsTyping, userId, activeChatId } = useChat()
+  const { setIsTyping, userId, activeChatId, activeChat } = useChat()
   const { socket, joinChat, leaveChat } = useSocket()
   const [newMessage, setNewMessage] = useState<string>("")
   const previousChatId = useRef<string | null>(null)
@@ -88,10 +88,14 @@ const MessageInput = () => {
     }
 
     const msgData: MessageT = {
+      id: "",
+      tempId: Date.now(),
       chatId: activeChatId,
       senderId: userId as string,
+      receiverId: activeChat?.participants[0].id as string,
       content: newMessage,
-      timestamp: new Date().toISOString(),
+      status: "sent",
+      createdAt: new Date().toISOString(),
     }
 
     socket.emit(NEW_MESSAGE, msgData)

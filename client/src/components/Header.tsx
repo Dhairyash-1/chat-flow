@@ -1,7 +1,9 @@
 // import UserProfile from "../components/UserProfile"
 import { SignedIn, SignIn, UserButton, useUser } from "@clerk/clerk-react"
 import SearchBar from "./SearchBar"
-import { Ellipsis } from "lucide-react"
+import { BellIcon, Ellipsis } from "lucide-react"
+import { Badge } from "./ui/badge"
+import NotificationBell from "./NotificationBell"
 
 const Header = () => {
   const { user } = useUser()
@@ -23,7 +25,16 @@ const Header = () => {
         </SignedIn>
         <p>{user?.fullName}</p>
 
-        <Ellipsis className="ml-auto" />
+        {/* <Ellipsis className="ml-auto" /> */}
+        {/* <div className="ml-auto relative">
+          <div className="relative cursor-pointer">
+            <BellIcon className="w-6 h-6 text-gray-600 hover:text-gray-800 transition duration-200 ease-in-out" />
+            <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#EF6448] text-xs font-bold text-white shadow-lg ">
+              {5}
+            </span>
+          </div>
+        </div> */}
+        <NotificationBell />
       </div>
     </>
   )

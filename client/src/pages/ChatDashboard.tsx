@@ -26,18 +26,6 @@ const ChatDashboard = () => {
   const { activeChat, activeChatId, setMessages, setOnlineUsers } = useChat()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
-  const { data } = useQuery({
-    queryKey: ["message", activeChatId], // Include `activeChatId` in the queryKey
-    queryFn: () => fetchChatById(activeChatId as string), // Use the `activeChatId` directly in the queryFn
-    enabled: !!activeChatId, // Only fetch when `activeChatId` is available
-  })
-
-  useEffect(() => {
-    if (data) {
-      setMessages(data.messages)
-    }
-  }, [data, setMessages])
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
@@ -51,7 +39,7 @@ const ChatDashboard = () => {
     if (!socket) return
 
     socket.on("online", (users: any[]) => {
-      // console.log("user online", users)
+      console.log("user online", users)
       setOnlineUsers(users)
     })
   }, [socket, setOnlineUsers])

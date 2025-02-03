@@ -1,25 +1,20 @@
 import { useChat } from "../hooks/useChat"
+import useIsUserOnline from "../hooks/useIsUserOnline"
 
 interface PropType {
   chat: ChatT
 }
 
 const ConversationItem = ({ chat }: PropType) => {
-  const {
-    activeChat,
-    onlineUsers,
-    setActiveChat,
-    activeChatId,
-    setActiveChatId,
-  } = useChat()
-  console.log(chat)
+  const { activeChatId, setActiveChatId } = useChat()
+  // console.log(chat)
   const isSelected = activeChatId === chat.id
 
-  console.log(chat, activeChatId, isSelected)
+  const isUserOnline = useIsUserOnline(chat.participants[0].id)
+
   return (
     <div
       onClick={() => {
-        setActiveChat(chat)
         setActiveChatId(chat.id)
       }}
       className={`py-4 px-1 flex gap-2 border-t cursor-pointer ${
@@ -37,9 +32,7 @@ const ConversationItem = ({ chat }: PropType) => {
           <h4 className="font-bold text-base">{chat.name}</h4>
           <span
             className={`w-[7px] h-[7px] rounded-full ${
-              onlineUsers?.includes(chat.participants[0].clerkId)
-                ? "bg-green-500"
-                : "bg-gray-400"
+              isUserOnline ? "bg-green-500" : "bg-gray-400"
             } `}
           ></span>
           {chat.lastMessageTime && (
