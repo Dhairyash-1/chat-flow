@@ -9,6 +9,7 @@ import {
   AnyPgColumn,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
+import { pgEnum } from "drizzle-orm/pg-core"
 
 // Users table - define first as it's referenced by other tables
 export const users = pgTable("users", {
@@ -27,6 +28,11 @@ export const users = pgTable("users", {
     .defaultNow(),
 })
 
+export const messageStatusEnum = pgEnum("message_status", [
+  "sent",
+  "delivered",
+  "read",
+])
 // Messages table - define before chats since it's referenced in chats
 export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -34,6 +40,7 @@ export const messages = pgTable("messages", {
   mediaUrl: text("media_url"),
   senderId: uuid("sender_id").notNull(),
   chatId: uuid("chat_id").notNull(),
+  status: messageStatusEnum("status").notNull().default("sent"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -29,15 +29,18 @@ export async function createProducer() {
 }
 
 export async function produceMessage(message: {
+  type: "NEW MESSAGE" | "STATUS_UPDATE"
+  id: string | number
   chatId: string
   content: string
+  status: "sent" | "delivered" | "read"
   senderId: string
-  timestamp: string
+  createdAt: string
 }) {
   const producer = await createProducer()
   await producer.send({
     messages: [
-      { key: `message-${Date.now()}`, value: JSON.stringify(message) },
+      { key: `message-${message.id}}`, value: JSON.stringify(message) },
     ],
     topic: "MESSAGES",
   })
@@ -59,16 +62,12 @@ export async function startMessageConsumer() {
       const parsedMsg = JSON.parse(message.value.toString())
 
       try {
-        // const user = await db
-        //   .select()
-        //   .from(users)
-        //   .where(eq(users.clerkId, parsedMsg.senderId))
-        //   .limit(1)
         await db.insert(messages).values({
           chatId: parsedMsg.chatId,
           content: parsedMsg.content,
+          status: parsedMsg.status,
           senderId: parsedMsg.senderId,
-          createdAt: new Date(parsedMsg.timestamp),
+          createdAt: new Date(parsedMsg.createdAt),
         })
       } catch (error) {
         console.log("Error in inserting msg to db", error)
