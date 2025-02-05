@@ -29,7 +29,7 @@ export async function createProducer() {
 }
 
 export async function produceMessage(message: {
-  type: "NEW MESSAGE" | "STATUS_UPDATE"
+  type: "image" | "text" | "video"
   id: string | number
   chatId: string
   content: string
@@ -65,6 +65,7 @@ export async function startMessageConsumer() {
         await db.insert(messages).values({
           chatId: parsedMsg.chatId,
           content: parsedMsg.content,
+          type: parsedMsg.type,
           status: parsedMsg.status,
           senderId: parsedMsg.senderId,
           createdAt: new Date(parsedMsg.createdAt),

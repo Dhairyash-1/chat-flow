@@ -33,6 +33,11 @@ export const messageStatusEnum = pgEnum("message_status", [
   "delivered",
   "read",
 ])
+export const messageTypeEnum = pgEnum("message_type", [
+  "text",
+  "image",
+  "video",
+])
 // Messages table - define before chats since it's referenced in chats
 export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -40,6 +45,7 @@ export const messages = pgTable("messages", {
   mediaUrl: text("media_url"),
   senderId: uuid("sender_id").notNull(),
   chatId: uuid("chat_id").notNull(),
+  type: messageTypeEnum("type").notNull().default("text"),
   status: messageStatusEnum("status").notNull().default("sent"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

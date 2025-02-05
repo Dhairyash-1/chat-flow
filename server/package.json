@@ -8,7 +8,7 @@
     "postinstall": "tsc",
     "dev": "nodemon",
     "db:studio": "npx drizzle-kit studio",
-    "db:push": "npx drizzle-kit push:pg"
+    "db:push": "npx drizzle-kit push"
   },
   "keywords": [],
   "author": "",

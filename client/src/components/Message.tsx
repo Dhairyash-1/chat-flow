@@ -1,8 +1,8 @@
-import { CheckIcon } from "lucide-react"
 import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
 import { useEffect, useRef } from "react"
 import MessageStatus from "./MessageStatus"
+import ImageViewModal from "./ImageViewModal"
 
 function extractTime(dateString: string) {
   // console.log(dateString)
@@ -45,32 +45,50 @@ const Message = ({ message }: { message: MessageT }) => {
 
   return (
     <div
-      className={`px-4 py-2 max-w-xs rounded-lg text-base mb-2 ${
+      className={`px-2 py-2 max-w-xs rounded-lg text-base mb-2 ${
         isOwnMessage
           ? "self-end bg-[#EF6448] text-white"
           : "self-start bg-[#e0e0e0] text-[#424242]"
-      }`}
+      } ${message.type === "image" && "cursor-pointer"} `}
       ref={messageRef}
     >
-      <div className="flex justify-between items-end">
-        <div>{message.content}</div>
-        {/* Render tick icon and time for the sender's message */}
-        {isOwnMessage && (
-          <div className="flex gap-1 items-center text-xs text-gray-300 ml-2">
-            {/* Message time */}
-            <span className="text-white">{extractTime(message.createdAt)}</span>
-            {/* Tick icon */}
-            {/* <span className="text-white mr-1">{<CheckIcon size={16} />}</span> */}
-            <MessageStatus status={message.status} />
-          </div>
+      <div className="flex flex-col gap-1">
+        {/* Render Text, Image, or Video Message */}
+        {message.type === "text" && (
+          <p className="whitespace-pre-wrap">{message.content}</p>
         )}
 
-        {/* Render only time for received messages */}
-        {!isOwnMessage && (
-          <div className="text-xs text-gray-500 ml-2">
-            {extractTime(message.createdAt)}
-          </div>
+        {message.type === "image" && (
+          <ImageViewModal imgUrl={message.content} />
         )}
+
+        {message.type === "video" && (
+          <video
+            src={message.content}
+            controls
+            className="w-96 h-auto rounded-lg shadow-md"
+          />
+        )}
+
+        {/* Message Footer (Time + Status) */}
+        <div className="flex justify-end items-end">
+          {/* Time & Status for Sender */}
+          {isOwnMessage && (
+            <div className="flex gap-1 items-center text-xs text-gray-300 ml-2">
+              <span className="text-white">
+                {extractTime(message.createdAt)}
+              </span>
+              <MessageStatus status={message.status} />
+            </div>
+          )}
+
+          {/* Time for Receiver */}
+          {!isOwnMessage && (
+            <div className="text-xs text-gray-500 ml-2">
+              {extractTime(message.createdAt)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

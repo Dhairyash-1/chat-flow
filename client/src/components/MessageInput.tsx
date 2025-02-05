@@ -7,9 +7,11 @@ import useSocket from "../hooks/useSocket"
 import { useAuth } from "@clerk/clerk-react"
 import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
+import AttachmentDropdown from "./AttachementDropdown"
 
 const MessageInput = () => {
-  const { setIsTyping, userId, activeChatId, activeChat } = useChat()
+  const { setIsTyping, userId, activeChatId, setMessages, activeChat } =
+    useChat()
   const { socket, joinChat, leaveChat } = useSocket()
   const [newMessage, setNewMessage] = useState<string>("")
   const previousChatId = useRef<string | null>(null)
@@ -89,6 +91,7 @@ const MessageInput = () => {
 
     const msgData: MessageT = {
       id: "",
+      type: "text",
       tempId: Date.now(),
       chatId: activeChatId,
       senderId: userId as string,
@@ -97,7 +100,7 @@ const MessageInput = () => {
       status: "sent",
       createdAt: new Date().toISOString(),
     }
-
+    // setMessages((prev) => [...prev, msgData])
     socket.emit(NEW_MESSAGE, msgData)
 
     setNewMessage("")
@@ -117,17 +120,7 @@ const MessageInput = () => {
       />
       <div className="flex gap-3 items-center">
         {/* Attachment Button */}
-        <button
-          className="flex items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100 
-                 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 p-2"
-          aria-label="Attach File"
-        >
-          <img
-            src={attachment}
-            className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 cursor-pointer"
-            alt="Attach"
-          />
-        </button>
+        <AttachmentDropdown />
 
         {/* Send Button */}
         <button

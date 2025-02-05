@@ -7,6 +7,7 @@ import { NEW_MESSAGE } from "../utils/event"
 export interface MessageT {
   tempId: number
   id: string
+  type: "text" | "image" | "video"
   senderId: string
   receiverId: string
   content: string
