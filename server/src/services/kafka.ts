@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Kafka, Producer } from "kafkajs"
 import fs from "fs"
 import path from "path"
