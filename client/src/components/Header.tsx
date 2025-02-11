@@ -4,6 +4,7 @@ import SearchBar from "./SearchBar"
 import { BellIcon, Ellipsis } from "lucide-react"
 import { Badge } from "./ui/badge"
 import NotificationBell from "./NotificationBell"
+import MoreOptions from "./MoreOptions"
 
 const Header = () => {
   const { user } = useUser()
@@ -25,7 +26,6 @@ const Header = () => {
         </SignedIn>
         <p>{user?.fullName}</p>
 
-        {/* <Ellipsis className="ml-auto" /> */}
         {/* <div className="ml-auto relative">
           <div className="relative cursor-pointer">
             <BellIcon className="w-6 h-6 text-gray-600 hover:text-gray-800 transition duration-200 ease-in-out" />
@@ -34,7 +34,10 @@ const Header = () => {
             </span>
           </div>
         </div> */}
-        <NotificationBell />
+        <div className="ml-auto flex items-center gap-3">
+          <NotificationBell />
+          <MoreOptions />
+        </div>
       </div>
     </>
   )

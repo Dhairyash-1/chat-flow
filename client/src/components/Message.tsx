@@ -1,8 +1,9 @@
 import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import MessageStatus from "./MessageStatus"
 import ImageViewModal from "./ImageViewModal"
+import { Download, FileText } from "lucide-react"
 
 function extractTime(dateString: string) {
   // console.log(dateString)
@@ -12,82 +13,115 @@ function extractTime(dateString: string) {
   return `${hours}:${minutes}` // Return the time in HH:MM format
 }
 
-const Message = ({ message }: { message: MessageT }) => {
+const Message = ({
+  message,
+  previousMessage,
+}: {
+  message: MessageT
+  previousMessage: MessageT
+}) => {
   const { userId } = useChat()
   const messageRef = useRef<HTMLDivElement | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
   const isOwnMessage = message.senderId === userId
+  const { activeChat, availableUsers, userId: currentUserId } = useChat()
+  const shouldShowSenderName =
+    activeChat?.isGroupChat &&
+    previousMessage?.senderId !== message.senderId &&
+    message.senderId !== currentUserId
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => {
-          if (
-            entry.isIntersecting &&
-            message.senderId !== userId &&
-            message.status !== "read"
-          ) {
-            // emit the message-read event
-          }
-        }),
-      { threshold: 0.8 }
-    )
+  const handleDocumentClick = async () => {
+    if (message.type !== "document") return
 
-    if (messageRef.current) {
-      observer.observe(messageRef.current)
+    try {
+      setIsDownloading(true)
+      const response = await fetch(message.content)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      console.log(url)
+
+      // Create link and trigger download
+      const link = document.createElement("a")
+      link.href = url
+      link.download = message.fileName || "document"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Download failed:", error)
+    } finally {
+      setIsDownloading(false)
     }
+  }
 
-    return () => {
-      if (messageRef.current) {
-        observer.unobserve(messageRef.current)
-      }
-    }
-  }, [message, userId])
+  const renderMessageContent = () => {
+    switch (message.type) {
+      case "text":
+        return <p className="whitespace-pre-wrap">{message.content}</p>
 
-  return (
-    <div
-      className={`px-2 py-2 max-w-xs rounded-lg text-base mb-2 ${
-        isOwnMessage
-          ? "self-end bg-[#EF6448] text-white"
-          : "self-start bg-[#e0e0e0] text-[#424242]"
-      } ${message.type === "image" && "cursor-pointer"} `}
-      ref={messageRef}
-    >
-      <div className="flex flex-col gap-1">
-        {/* Render Text, Image, or Video Message */}
-        {message.type === "text" && (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        )}
+      case "image":
+        return <ImageViewModal imgUrl={message.content} />
 
-        {message.type === "image" && (
-          <ImageViewModal imgUrl={message.content} />
-        )}
-
-        {message.type === "video" && (
+      case "video":
+        return (
           <video
             src={message.content}
             controls
             className="w-96 h-auto rounded-lg shadow-md"
           />
-        )}
+        )
 
-        {/* Message Footer (Time + Status) */}
-        <div className="flex justify-end items-end">
-          {/* Time & Status for Sender */}
-          {isOwnMessage && (
-            <div className="flex gap-1 items-center text-xs text-gray-300 ml-2">
-              <span className="text-white">
-                {extractTime(message.createdAt)}
-              </span>
-              <MessageStatus status={message.status} />
+      case "document":
+        return (
+          <div
+            className="flex items-center space-x-3 cursor-pointer hover:bg-black/5 p-2 rounded-md transition-colors"
+            onClick={handleDocumentClick}
+          >
+            <FileText className="h-8 w-8 text-blue-500" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {message.fileName || "file name"}
+              </p>
+              {/* <p className="text-xs text-gray-500">
+                {(message.fileSize / 1024).toFixed(2)} KB
+              </p> */}
             </div>
-          )}
+            {isDownloading ? (
+              <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="h-5 w-5 text-gray-500" />
+            )}
+          </div>
+        )
+    }
+  }
 
-          {/* Time for Receiver */}
-          {!isOwnMessage && (
-            <div className="text-xs text-gray-500 ml-2">
+  return (
+    <div className="flex flex-col">
+      {shouldShowSenderName && (
+        <p className="text-sm font-semibold text-gray-700 mb-1">
+          {availableUsers.find((user) => user.id === message.senderId)?.name ||
+            "Unknown"}
+        </p>
+      )}
+      <div
+        className={`px-3 py-2 max-w-xs rounded-lg text-base mb-2 ${
+          isOwnMessage
+            ? "self-end bg-[#EF6448] text-white"
+            : "self-start bg-[#e0e0e0] text-[#424242]"
+        }`}
+        ref={messageRef}
+      >
+        <div className="flex flex-col gap-1">
+          {renderMessageContent()}
+
+          <div className="flex justify-end items-center text-xs">
+            <span className={isOwnMessage ? "text-white/70" : "text-gray-500"}>
               {extractTime(message.createdAt)}
-            </div>
-          )}
+            </span>
+            {isOwnMessage && <MessageStatus status={message.status} />}
+          </div>
         </div>
       </div>
     </div>

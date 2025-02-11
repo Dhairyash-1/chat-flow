@@ -22,3 +22,11 @@ export const createNewChat = async (participantId: string) => {
   console.log("new", res)
   return res.data
 }
+export const createGroupChat = async (name: string, participants: string[]) => {
+  const res = await axiosInstance.post(`/chat/group/new`, {
+    name,
+    participants,
+  })
+  console.log("new", res)
+  return res.data
+}

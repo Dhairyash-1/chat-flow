@@ -1,45 +1,90 @@
-import { FileTextIcon, XIcon } from "lucide-react"
-import { useState } from "react"
+import React from "react"
+import {
+  FileTextIcon,
+  FileIcon,
+  FileSpreadsheetIcon,
+  XIcon,
+} from "lucide-react"
 
-const DocumentPreview = ({ file }) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-
-  const getFileIcon = (fileType: string) => {
-    const iconMap = {
-      "application/pdf": "text-red-500",
-      "application/msword": "text-blue-500",
+const DocumentPreview = ({ file, isFileSizeExceed }) => {
+  const getFileDetails = (fileType: string) => {
+    const fileTypeMap = {
+      "application/pdf": {
+        icon: FileTextIcon,
+        color: "text-red-500",
+        friendlyName: "PDF Document",
+      },
+      "application/msword": {
+        icon: FileTextIcon,
+        color: "text-blue-500",
+        friendlyName: "Word Document",
+      },
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        "text-blue-500",
+        {
+          icon: FileTextIcon,
+          color: "text-blue-500",
+          friendlyName: "Word Document",
+        },
+      "application/vnd.ms-excel": {
+        icon: FileSpreadsheetIcon,
+        color: "text-green-500",
+        friendlyName: "Excel Spreadsheet",
+      },
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+        icon: FileSpreadsheetIcon,
+        color: "text-green-500",
+        friendlyName: "Excel Spreadsheet",
+      },
+      "text/plain": {
+        icon: FileSpreadsheetIcon,
+        color: "text-gray-500",
+        friendlyName: "text file",
+      },
     }
-    return iconMap[fileType] || "text-gray-500"
+
+    return (
+      fileTypeMap[fileType] || {
+        icon: FileIcon,
+        color: "text-gray-500",
+        friendlyName: "Unknown File",
+      }
+    )
   }
 
   const renderDocumentPreview = () => {
     if (!file) return null
 
-    // For PDFs, we'll use an embedded view if possible
-    if (file.type === "application/pdf") {
-      return (
-        <div className="w-96 h-72 border rounded-lg overflow-hidden">
-          <iframe
-            src={URL.createObjectURL(file)}
-            width="100%"
-            height="100%"
-            className="border-none"
-          />
-        </div>
-      )
-    }
+    const {
+      icon: FileIconComponent,
+      color,
+      friendlyName,
+    } = getFileDetails(file.type)
 
-    // For Word documents, show a placeholder with file details
     return (
       <div className="w-96 h-72 border rounded-lg flex flex-col items-center justify-center space-y-4 p-4">
-        <FileTextIcon size={64} className={getFileIcon(file.type)} />
+        <FileIconComponent size={64} className={color} />
         <div className="text-center">
-          <p className="font-semibold text-gray-700">{file.name}</p>
-          <p className="text-sm text-gray-500">
-            {(file.size / 1024).toFixed(2)} KB
+          <p className="font-semibold text-gray-700 truncate max-w-full">
+            {file.name}
           </p>
+          <p
+            className={`text-sm ${
+              isFileSizeExceed ? "text-red-500" : "text-gray-500"
+            }`}
+          >
+            {(file.size / 1024).toFixed(2)} KB
+            <span className="ml-2">{friendlyName}</span>
+          </p>
+          {isFileSizeExceed && (
+            <div className="mt-2 text-center">
+              <p className="text-sm text-red-500">
+                File size exceeds 10MB limit
+              </p>
+              <p className="text-sm text-red-500">
+                Please upload a file smaller than 10MB
+              </p>
+            </div>
+          )}
         </div>
       </div>
     )

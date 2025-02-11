@@ -37,6 +37,8 @@ export const messageTypeEnum = pgEnum("message_type", [
   "text",
   "image",
   "video",
+  "document",
+  "voice",
 ])
 // Messages table - define before chats since it's referenced in chats
 export const messages = pgTable("messages", {

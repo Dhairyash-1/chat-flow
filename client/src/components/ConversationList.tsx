@@ -16,7 +16,8 @@ import ChatSkeleton from "./ChatSkeleton"
 
 const ConversationList = () => {
   const { userId } = useAuth()
-  const { setActiveChat, activeChatId, setUserId } = useChat()
+  const { setActiveChat, activeChatId, setUserId, setAvailableUsers } =
+    useChat()
 
   // Fetch available users and chats
   const { data: availableUsers = [], isLoading: isUserLoading } = useQuery({
@@ -56,6 +57,14 @@ const ConversationList = () => {
   const filteredUsers = availableUsers?.filter(
     (user) => user.clerkId !== userId
   )
+
+  useEffect(() => {
+    if (filteredUsers.length) {
+      setAvailableUsers(filteredUsers)
+    }
+  }, [filteredUsers, setAvailableUsers])
+
+  // console.log("chats", chats)
 
   return (
     <div className="flex flex-col mt-2">

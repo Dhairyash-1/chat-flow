@@ -23,26 +23,52 @@ const ConversationItem = ({ chat }: PropType) => {
           : "hover:bg-[#ececec] hover:border-l-4 hover:border-l-[#EF6448] border-[#ececec]"
       }`}
     >
-      <img
-        src={chat.participants[0].profilePic}
-        className="w-[50px] h-[50px] rounded-full items-start"
-      />
-      <div className="flex flex-col gap-1.5">
+      {chat.isGroupChat ? (
+        <div className="relative w-[50px] h-[50px]">
+          <img
+            src={chat.participants[0]?.profilePic}
+            className="w-[35px] h-[35px] rounded-full absolute top-0 left-0"
+          />
+          {chat.participants[1] && (
+            <img
+              src={chat.participants[1]?.profilePic}
+              className="w-[35px] h-[35px] rounded-full absolute bottom-0 right-0 border-2 border-white"
+            />
+          )}
+        </div>
+      ) : (
+        <img
+          src={chat.participants[0]?.profilePic}
+          className="w-[50px] h-[50px] rounded-full items-start"
+        />
+      )}
+      <div className="flex flex-col gap-1">
         <div className="flex gap-1.5 items-center">
           <h4 className="font-bold text-base">{chat.name}</h4>
-          <span
-            className={`w-[7px] h-[7px] rounded-full ${
-              isUserOnline ? "bg-green-500" : "bg-gray-400"
-            } `}
-          ></span>
+          {chat.isGroupChat && (
+            <span className="ml-2 text-xs text-gray-500">
+              ({chat.participants.length + 1} members)
+            </span>
+          )}
+          {!chat.isGroupChat && (
+            <span
+              className={`w-[7px] h-[7px] rounded-full ${
+                isUserOnline ? "bg-green-500" : "bg-gray-400"
+              } `}
+            ></span>
+          )}
           {chat.lastMessageTime && (
             <span className="text-[#c0c0c0] text-sm">11 days</span>
           )}
         </div>
-        {chat?.lastMessageTime && (
+        {chat?.lastMessage && (
           <p className="line-clamp-3 text-[#424242]">
-            <span className="text-[#c0c0c0]  text-base">Kristine: </span>
-            {chat.lastMessage}
+            {chat.isGroupChat && (
+              <span className="text-[#c0c0c0]  text-base">
+                {chat.lastMessage.sender.name}{" "}
+              </span>
+            )}
+            {chat.lastMessage.content}
           </p>
         )}
       </div>

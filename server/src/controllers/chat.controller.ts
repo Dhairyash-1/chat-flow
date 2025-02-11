@@ -143,6 +143,96 @@ export const createOneToOneChat = async (req: Request, res: Response) => {
   }
 }
 
+export const createGroupChat = async (req: Request, res: Response) => {
+  try {
+    const userId = req?.auth?.userId
+    if (!userId) return res.status(401).json({ error: "Unauthorized" })
+
+    const { name, participants } = req.body
+
+    // Validate input
+    if (!name || !participants || participants.length < 2) {
+      return res.status(400).json({
+        error: "Group chat requires a name and at least 2 participants",
+      })
+    }
+
+    // Get current user
+    const currentUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1)
+
+    if (currentUser.length === 0) {
+      return res.status(404).json({ error: "Current user not found" })
+    }
+
+    // Validate participants exist
+    const participantUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, participants))
+
+    if (participantUsers.length !== participants.length) {
+      return res.status(404).json({ error: "Some participants not found" })
+    }
+
+    // Ensure current user is included
+    const participantIds = [
+      ...new Set([...participantUsers.map((p) => p.id), currentUser[0].id]),
+    ]
+
+    // Create group chat
+    const [newChat] = await db
+      .insert(chats)
+      .values({
+        isGroupChat: true,
+        name,
+        createdBy: currentUser[0].id,
+      })
+      .returning()
+
+    // Add participants
+    const chatParticipantsData = participantIds.map((userId) => ({
+      chatId: newChat.id,
+      userId,
+      role: userId === currentUser[0].id ? "admin" : "member",
+    }))
+
+    await db.insert(chatParticipants).values(chatParticipantsData)
+
+    // Fetch complete chat with participants
+    const chatWithParticipants = await db
+      .select({
+        chat: chats,
+        participants: sql<string>`json_agg(json_build_object(
+          'id', ${users.id},
+          'name', ${users.name},
+          'email', ${users.email},
+          'profilePic', ${users.profilePic},
+          'role', ${chatParticipants.role}
+        ))`,
+      })
+      .from(chats)
+      .innerJoin(chatParticipants, eq(chats.id, chatParticipants.chatId))
+      .innerJoin(users, eq(chatParticipants.userId, users.id))
+      .where(eq(chats.id, newChat.id))
+      .groupBy(chats.id)
+      .limit(1)
+
+    return res.status(201).json({
+      message: "Group chat created successfully",
+      chat: chatWithParticipants[0],
+    })
+  } catch (error) {
+    console.error("Error creating group chat:", error)
+    return res.status(500).json({
+      error: "An error occurred while creating group chat",
+    })
+  }
+}
+
 export const getAllUserChats = async (req: Request, res: Response) => {
   try {
     const userId = req.auth?.userId
@@ -238,6 +328,7 @@ export const getAllUserChats = async (req: Request, res: Response) => {
       )
       .groupBy(
         chats.id,
+        chats.lastMessageId,
         lastMessage.id,
         lastMessage.content,
         lastMessage.mediaUrl,
@@ -276,157 +367,3 @@ export const getAllUserChats = async (req: Request, res: Response) => {
   }
 }
 export const deleteChat = (req: Request, res: Response) => {}
-
-// export const startConversation = async (req: Request, res: Response) => {
-//   try {
-//     const { participantIds } = req.body
-
-//     if (!participantIds?.length || participantIds.length < 2) {
-//       return res
-//         .status(400)
-//         .json({ error: "At least two participant IDs are required." })
-//     }
-
-//     const sortedParticipantIds = [...participantIds].sort()
-
-//     const existingConversation = await db
-//       .select({
-//         id: conversations.id,
-//         participantCount: sql`COUNT(DISTINCT ${chatParticipants.userId})`.as(
-//           "participantCount"
-//         ),
-//       })
-//       .from(conversations)
-//       .innerJoin(
-//         chatParticipants,
-//         eq(conversations.id, chatParticipants.conversationId)
-//       )
-//       .where(inArray(chatParticipants.userId, sortedParticipantIds))
-//       .groupBy(conversations.id)
-//       .having(({ participantCount }) =>
-//         eq(participantCount, sortedParticipantIds.length)
-//       )
-//       .limit(1)
-//       .execute()
-
-//     if (existingConversation[0]) {
-//       return res.status(200).json({
-//         message: "Conversation exists",
-//         conversationId: existingConversation[0].id,
-//       })
-//     }
-
-//     const [conversation] = await db
-//       .insert(conversations)
-//       .values({
-//         isGroupChat: participantIds.length > 2,
-//       })
-//       .returning()
-
-//     await db.insert(chatParticipants).values(
-//       sortedParticipantIds.map((id) => ({
-//         conversationId: conversation.id,
-//         userId: id,
-//       }))
-//     )
-
-//     return res.status(201).json({
-//       message: "Conversation created",
-//       conversation,
-//     })
-//   } catch (error) {
-//     console.error("Error:", error)
-//     return res.status(500).json({ error: "Internal Server Error" })
-//   }
-// }
-// export const getUserConversations = async (req: Request, res: Response) => {
-//   try {
-//     //@ts-ignore
-//     const { userId } = req.auth // Remove @ts-ignore if possible
-
-//     const Conversations = await db
-//       .select({
-//         conversationId: conversations.id,
-//         isGroupChat: conversations.isGroupChat,
-//         lastMessage: messages.content,
-//         lastMessageTime: messages.createdAt,
-//         participantId: users.id,
-//         clerkId: users.clerkId,
-//         participantName: users.name,
-//         participantProfilePic: users.profilePic,
-//       })
-//       .from(conversations)
-//       .innerJoin(
-//         chatParticipants,
-//         eq(conversations.id, chatParticipants.conversationId)
-//       )
-//       .leftJoin(messages, eq(conversations.lastMessageId, messages.id))
-//       .innerJoin(
-//         users,
-//         and(
-//           eq(chatParticipants.userId, users.clerkId),
-//           ne(chatParticipants.userId, userId) // Ensure we're not selecting the current user
-//         )
-//       )
-//       .where(eq(chatParticipants.conversationId, conversations.id))
-//       .execute()
-
-//     return res.json({ data: Conversations })
-//   } catch (error) {
-//     console.error(`Error fetching user conversations :`, error)
-//     res.status(500).json({ error: "Failed to fetch user conversations" })
-//   }
-// }
-
-// export const getConversationById = async (req: Request, res: Response) => {
-//   try {
-//     const { id } = req.params
-//     //@ts-ignore
-//     const { userId } = req.auth
-//     console.log("param", id)
-
-//     const conv = await db
-//       .select({
-//         conversationId: conversations.id,
-//         isGroupChat: conversations.isGroupChat,
-//         lastMessage: messages.content,
-//         lastMessageTime: messages.createdAt,
-//         participants: users.name,
-//         clerkId: users.clerkId,
-//         participantProfilePic: users.profilePic,
-//       })
-//       .from(conversations)
-//       .innerJoin(
-//         chatParticipants,
-//         eq(conversations.id, chatParticipants.conversationId)
-//       )
-//       .leftJoin(messages, eq(conversations.lastMessageId, messages.id))
-//       .innerJoin(
-//         users,
-//         and(
-//           eq(chatParticipants.userId, users.clerkId),
-//           ne(chatParticipants.userId, userId) // Ensure we're not selecting the current user
-//         )
-//       )
-//       .where(eq(conversations.id, id))
-//       .limit(1)
-
-//     return res.status(200).json({ conv: conv[0] })
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
-
-// export const getAllMessages = async (req: Request, res: Response) => {
-//   try {
-//     const { convId } = req.params
-//     //@ts-ignore
-//     const { userId } = req.auth
-//     const data = await db
-//       .select()
-//       .from(messages)
-//       .where(eq(messages.conversationId, convId))
-
-//     return res.status(200).json({ messages: data })
-//   } catch (error) {}
-// }

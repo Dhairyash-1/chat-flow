@@ -38,7 +38,13 @@ const MessagesContainer = () => {
         <MessageSkeleton />
       ) : (
         messages.length > 0 &&
-        messages.map((message, i) => <Message key={i} message={message} />)
+        messages.map((message, i) => (
+          <Message
+            key={i}
+            message={message}
+            previousMessage={messages[i - 1]}
+          />
+        ))
       )}
     </div>
   )

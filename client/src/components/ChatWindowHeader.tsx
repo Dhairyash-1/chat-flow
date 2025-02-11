@@ -7,11 +7,12 @@ import useIsUserOnline from "../hooks/useIsUserOnline"
 const ChatWindowHeader = () => {
   const { socket } = useSocket()
 
-  const { activeChatId, setActiveChatId } = useChat()
+  const { activeChatId, setActiveChatId, setActiveChat } = useChat()
   const [isTyping, setIsTyping] = useState(false)
   const { activeChat } = useChat()
 
   const conversation = activeChat as ChatT
+
   const { id, profilePic, name, clerkId } = conversation.participants[0]
 
   useEffect(() => {
@@ -26,12 +27,14 @@ const ChatWindowHeader = () => {
   }, [socket, activeChatId, clerkId])
 
   const isUserOnline = useIsUserOnline(id)
+  const isDirectChat = !conversation.isGroupChat
 
   return (
     <div className="bg-[#f6f6f6] h-[72px] flex gap-4 items-center px-4 py-2">
       <button
         onClick={() => {
           setActiveChatId(null)
+          setActiveChat(null)
         }}
         className=" flex md:hidden items-center gap-1 p-2 bg-white text-black text-sm font-medium rounded-md shadow hover:bg-gray-100 border border-gray-300 transition-all duration-200"
       >
@@ -45,13 +48,17 @@ const ChatWindowHeader = () => {
         alt="user"
       />
       <div className="flex flex-col gap-1 relative">
-        <h3 className="font-bold text-lg ">{name}</h3>
-        <div
-          className={`absolute ${
-            isUserOnline ? "bg-green-500" : "bg-gray-400"
-          } w-[8px] h-[8px] rounded-full top-[10px] -right-4`}
-        ></div>
-        {isTyping && (
+        <h3 className="font-bold text-lg ">
+          {conversation.isGroupChat ? conversation.name : name}
+        </h3>
+        {isDirectChat && (
+          <div
+            className={`absolute w-[8px] h-[8px] rounded-full top-[10px] -right-4 ${
+              isUserOnline ? "bg-green-500" : "bg-gray-400"
+            }`}
+          ></div>
+        )}
+        {isDirectChat && isTyping && (
           <p className="font-normal text-base text-[#c0c0c0]">Typing...</p>
         )}
       </div>

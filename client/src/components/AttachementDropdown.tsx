@@ -18,6 +18,7 @@ import axios from "axios"
 
 const AttachmentDropdown = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isFileSizeExceed, setIsFileSizeExceed] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const docInputRef = useRef<HTMLInputElement>(null)
@@ -38,8 +39,15 @@ const AttachmentDropdown = () => {
     const file = e.target.files ? e.target.files[0] : null
     if (file) {
       setSelectedFile(file)
+      console.log("file", file)
       const objectUrl = URL.createObjectURL(file)
       setPreviewUrl(objectUrl)
+
+      if (file.size > 10 * 1024 * 1024) {
+        setIsFileSizeExceed(true)
+      } else {
+        setIsFileSizeExceed(false)
+      }
     }
   }
 
@@ -74,8 +82,8 @@ const AttachmentDropdown = () => {
       )
 
       // Store the secure URL returned by Cloudinary
-      return response.data.secure_url
       setLoading(false)
+      return response.data.secure_url
     } catch (error) {
       console.error("Upload failed", error)
       setLoading(false)
@@ -91,11 +99,19 @@ const AttachmentDropdown = () => {
     }
     const url = await uploadToCloudinary(selectedFile)
 
-    console.log("url", url)
+    let fileType: "image" | "video" | "document" | "voice" | "text"
+
+    if (selectedFile.type.startsWith("image")) {
+      fileType = "image"
+    } else if (selectedFile.type.startsWith("video")) {
+      fileType = "video"
+    } else {
+      fileType = "document"
+    }
 
     const msgData: MessageT = {
       id: "",
-      type: selectedFile.type.startsWith("image") ? "image" : "video",
+      type: fileType,
       tempId: Date.now(),
       chatId: activeChatId,
       senderId: userId as string,
@@ -115,11 +131,19 @@ const AttachmentDropdown = () => {
 
     return (
       <div className="relative">
+        {isFileSizeExceed && (
+          <div className="mb-2 text-center">
+            <p className="text-sm text-red-500">File size exceeds 10MB limit</p>
+            <p className="text-sm text-red-500">
+              Please upload a file smaller than 10MB
+            </p>
+          </div>
+        )}
         {selectedFile.type.startsWith("image") && (
           <img
             src={previewUrl}
             alt="Preview"
-            className="w-96 h-72 object-contain rounded-lg shadow-md"
+            className="w-96 h-72 object-contain rounded-lg "
           />
         )}
         {selectedFile.type.startsWith("video") && (
@@ -131,7 +155,10 @@ const AttachmentDropdown = () => {
         )}
         {!selectedFile.type.startsWith("video") &&
           !selectedFile.type.startsWith("image") && (
-            <DocumentPreview file={selectedFile} />
+            <DocumentPreview
+              file={selectedFile}
+              isFileSizeExceed={isFileSizeExceed}
+            />
           )}
         <button
           onClick={clearSelection}
@@ -142,13 +169,17 @@ const AttachmentDropdown = () => {
         </button>
         <button
           onClick={handleSendMessage}
-          disabled={Loading}
+          disabled={Loading || isFileSizeExceed}
           className={`
         flex absolute bottom-2 right-2 items-center justify-center 
         rounded-full bg-[#fee7e2] shadow-md hover:bg-[#fcd2c8] 
         w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 p-2
         transition-all duration-300 ease-in-out
-        ${Loading ? "cursor-not-allowed opacity-70" : "hover:scale-105"}
+        ${
+          Loading || isFileSizeExceed
+            ? "cursor-not-allowed opacity-70"
+            : "hover:scale-105"
+        }
       `}
           aria-label="Send Message"
         >
@@ -160,7 +191,7 @@ const AttachmentDropdown = () => {
           ) : (
             <img
               src={sendIcon}
-              className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 cursor-pointer"
+              className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6"
               alt="Send"
             />
           )}
@@ -220,7 +251,7 @@ const AttachmentDropdown = () => {
               <input
                 ref={docInputRef}
                 type="file"
-                accept="application/pdf,.doc,.docx"
+                accept="application/*, .doc, .docx, .pdf, .xls, .xlsx, .ppt, .pptx, .txt, .rtf"
                 onChange={handleFileChange}
                 className="hidden"
               />

@@ -7,12 +7,13 @@ import { NEW_MESSAGE } from "../utils/event"
 export interface MessageT {
   tempId: number
   id: string
-  type: "text" | "image" | "video"
+  type: "text" | "image" | "video" | "document" | "voice"
   senderId: string
   receiverId: string
   content: string
   chatId?: string
   createdAt: string
+  isGroup: boolean
   status: "sent" | "delivered" | "read"
 }
 
@@ -36,6 +37,7 @@ interface ChatContextProps {
   onlineUsers: OnlineUserT[] | null
   userId: string | null
   notifications: NotificationT[]
+  availableUsers: any[]
   setUserId: (id: string) => void
   // showChatList: boolean
   setMessages: React.Dispatch<React.SetStateAction<MessageT[]>>
@@ -44,6 +46,7 @@ interface ChatContextProps {
   setIsTyping: (status: boolean) => void
   setOnlineUsers: React.Dispatch<React.SetStateAction<OnlineUserT[] | null>>
   setNotifications: React.Dispatch<React.SetStateAction<NotificationT[]>>
+  setAvailableUsers: React.Dispatch<React.SetStateAction<any[]>>
   // setShowChatList: (status: boolean) => void
 }
 
@@ -59,6 +62,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUserT[] | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<NotificationT[]>([])
+  const [availableUsers, setAvailableUsers] = useState<any[]>([])
   const { socket, leaveChat } = useSocket()
 
   useEffect(() => {
@@ -153,6 +157,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         setUserId,
         notifications,
         setNotifications,
+        availableUsers,
+        setAvailableUsers,
       }}
     >
       {children}

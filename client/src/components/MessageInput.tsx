@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/clerk-react"
 import { MessageT } from "../context/ChatContext"
 import { useChat } from "../hooks/useChat"
 import AttachmentDropdown from "./AttachementDropdown"
+import VoiceRecorder from "./VoiceRecorder"
 
 const MessageInput = () => {
   const { setIsTyping, userId, activeChatId, setMessages, activeChat } =
@@ -96,6 +97,7 @@ const MessageInput = () => {
       chatId: activeChatId,
       senderId: userId as string,
       receiverId: activeChat?.participants[0].id as string,
+      isGroup: activeChat?.isGroupChat as boolean,
       content: newMessage,
       status: "sent",
       createdAt: new Date().toISOString(),
@@ -122,19 +124,22 @@ const MessageInput = () => {
         {/* Attachment Button */}
         <AttachmentDropdown />
 
-        {/* Send Button */}
-        <button
-          type="submit"
-          className="flex items-center justify-center rounded-full bg-[#fee7e2] shadow-md hover:bg-[#fcd2c8] 
+        {newMessage ? (
+          <button
+            type="submit"
+            className="flex items-center justify-center rounded-full bg-[#fee7e2] shadow-md hover:bg-[#fcd2c8] 
                  w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 p-2"
-          aria-label="Send Message"
-        >
-          <img
-            src={sendIcon}
-            className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 cursor-pointer"
-            alt="Send"
-          />
-        </button>
+            aria-label="Send Message"
+          >
+            <img
+              src={sendIcon}
+              className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 cursor-pointer"
+              alt="Send"
+            />
+          </button>
+        ) : (
+          <VoiceRecorder onSend={() => {}} />
+        )}
       </div>
     </form>
   )

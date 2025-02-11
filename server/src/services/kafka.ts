@@ -2,7 +2,7 @@ import { Kafka, Producer } from "kafkajs"
 import fs from "fs"
 import path from "path"
 import { db } from "../config/drizzle"
-import { messages, users } from "../models/schema"
+import { chats, messages, users } from "../models/schema"
 import { eq } from "drizzle-orm"
 
 const kafka = new Kafka({
@@ -62,14 +62,22 @@ export async function startMessageConsumer() {
       const parsedMsg = JSON.parse(message.value.toString())
 
       try {
-        await db.insert(messages).values({
-          chatId: parsedMsg.chatId,
-          content: parsedMsg.content,
-          type: parsedMsg.type,
-          status: parsedMsg.status,
-          senderId: parsedMsg.senderId,
-          createdAt: new Date(parsedMsg.createdAt),
-        })
+        const message = await db
+          .insert(messages)
+          .values({
+            chatId: parsedMsg.chatId,
+            content: parsedMsg.content,
+            type: parsedMsg.type,
+            status: parsedMsg.status,
+            senderId: parsedMsg.senderId,
+            createdAt: new Date(parsedMsg.createdAt),
+          })
+          .returning()
+        // update the lastmessage
+        await db
+          .update(chats)
+          .set({ lastMessageId: message[0].id })
+          .where(eq(chats.id, message[0].chatId))
       } catch (error) {
         console.log("Error in inserting msg to db", error)
         pause()

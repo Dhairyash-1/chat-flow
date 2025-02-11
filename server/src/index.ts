@@ -120,6 +120,7 @@ io.on("connection", (socket) => {
       type,
       chatId,
       senderId,
+      isGroupChat,
       receiverId,
       createdAt,
     }) => {
@@ -140,6 +141,7 @@ io.on("connection", (socket) => {
           senderId: senderId,
           type,
           receiverId,
+          isGroupChat,
           content: content,
           status,
           createdAt,
@@ -212,10 +214,10 @@ sub.on("message", async (channel, message) => {
 
     let newMessage = parsedMsg
 
-    if (receiverSocket) {
+    if (receiverSocket || parsedMsg.isGroupChat) {
       newMessage = { ...parsedMsg, status: "delivered" }
 
-      if (receiverInRoom) {
+      if (receiverInRoom || parsedMsg.isGroupChat) {
         // Receiver is online and in the chat room, deliver message instantly
         // Emit the updated message to the specified chat room
         io.to(parsedMsg.chatId).emit(NEW_MESSAGE, JSON.stringify(newMessage))
