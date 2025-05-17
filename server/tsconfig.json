@@ -9,9 +9,7 @@
     "noImplicitAny": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
-    // "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true
+    "strict": true
   },
   "include": ["src/**/*"]
 }

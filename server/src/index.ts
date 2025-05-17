@@ -50,18 +50,21 @@ const pub = new Redis({
   port: Number(process.env.REDIS_PORT),
   username: process.env.REDIS_USERNAME as string,
   password: process.env.REDIS_PASSWORD as string,
+  tls: {},
 })
 const sub = new Redis({
   host: process.env.REDIS_HOST as string,
   port: Number(process.env.REDIS_PORT),
   username: process.env.REDIS_USERNAME as string,
   password: process.env.REDIS_PASSWORD as string,
+  tls: {},
 })
 const redisStore = new Redis({
   host: process.env.REDIS_HOST as string,
   port: Number(process.env.REDIS_PORT),
   username: process.env.REDIS_USERNAME as string,
   password: process.env.REDIS_PASSWORD as string,
+  tls: {},
 })
 
 // Keep the online users in a global map

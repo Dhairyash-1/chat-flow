@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Kafka, Producer } from "kafkajs"
 import fs from "fs"
 import path from "path"
@@ -6,15 +5,17 @@ import { db } from "../config/drizzle"
 import { chats, messages, users } from "../models/schema"
 import { eq } from "drizzle-orm"
 
+const ca = Buffer.from(process.env.KAFKA_CA_BASE64!, "base64").toString("utf-8")
+
 const kafka = new Kafka({
-  brokers: [process.env.KAFKA_URL as string],
+  brokers: [process.env.KAFKA_URL!],
   ssl: {
-    ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
+    ca: [ca],
   },
   sasl: {
-    username: process.env.KAFKA_USERNAME as string,
-    password: process.env.KAFKA_PASSWORD as string,
     mechanism: "plain",
+    username: process.env.KAFKA_USERNAME!,
+    password: process.env.KAFKA_PASSWORD!,
   },
 })
 
@@ -65,6 +66,7 @@ export async function startMessageConsumer() {
       try {
         const message = await db
           .insert(messages)
+          // @ts-ignore
           .values({
             chatId: parsedMsg.chatId,
             content: parsedMsg.content,
@@ -77,6 +79,8 @@ export async function startMessageConsumer() {
         // update the lastmessage
         await db
           .update(chats)
+          // @ts-ignore
+
           .set({ lastMessageId: message[0].id })
           .where(eq(chats.id, message[0].chatId))
       } catch (error) {
