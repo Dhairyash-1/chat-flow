@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "build": "esbuild index=./src --bundle --minify --outdir=dist --packages=external --platform=node",
+    "start": "node dist",
     "postinstall": "tsc --noEmit || true",
     "dev": "nodemon",
     "db:studio": "npx drizzle-kit studio",

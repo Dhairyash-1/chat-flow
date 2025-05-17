@@ -33,6 +33,7 @@ app.use(
 const server = http.createServer(app)
 app.use(express.json({ limit: "16kb" }))
 app.use(express.urlencoded({ extended: true, limit: "16kb" }))
+console.log("CLIENT_URL:", process.env.CLIENT_URL)
 
 const corsOptions = {
   origin: ["http://localhost:5173", process.env.CLIENT_URL as string],
@@ -44,6 +45,7 @@ app.use(cors(corsOptions))
 const io = new Server(server, {
   cors: corsOptions,
 })
+
 startMessageConsumer()
 const pub = new Redis({
   host: process.env.REDIS_HOST as string,
